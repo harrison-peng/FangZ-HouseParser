@@ -7,13 +7,13 @@ public class House {
 	private String address;
 	private String location;
 	private String price;
-	private String registeredSquare;
-	private String status;
-	private String pattern;
 	private String type;
 	private String url;
 	private String addressGeometry;
 	private String picture;
+	private String information;
+	private String community;
+	private String life;
 	private double[] locationPoint;
 
 	public int getId() {
@@ -64,30 +64,6 @@ public class House {
 		this.price = price;
 	}
 
-	public String getRegisteredSquare() {
-		return registeredSquare;
-	}
-
-	public void setRegisteredSquare(String registeredSquare) {
-		this.registeredSquare = registeredSquare;
-	}
-
-	public String getStatus() {
-		return status;
-	}
-
-	public void setStatus(String status) {
-		this.status = status;
-	}
-
-	public String getPattern() {
-		return pattern;
-	}
-
-	public void setPattern(String pattern) {
-		this.pattern = pattern;
-	}
-
 	public String getType() {
 		return type;
 	}
@@ -127,4 +103,29 @@ public class House {
 	public void setPicture(String picture) {
 		this.picture = picture;
 	}
+
+	public String getCommunity() {
+		return community;
+	}
+
+	public void setCommunity(String community) {
+		this.community = community;
+	}
+
+	public String getLife() {
+		return life;
+	}
+
+	public void setLife(String life) {
+		this.life = life;
+	}
+
+	public String getInformation() {
+		return information;
+	}
+
+	public void setInformation(String information) {
+		this.information = information;
+	}
+
 }

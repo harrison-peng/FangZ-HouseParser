@@ -16,7 +16,9 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 import com.google.gson.Gson;
+import com.server.project.api.Community;
 import com.server.project.api.House;
+import com.server.project.api.Picture;
 import com.server.project.api.Point;
 import com.server.project.tool.PointCreator;
 
@@ -136,12 +138,12 @@ public class HouseParser {
 		c = DriverManager.getConnection("jdbc:postgresql://140.119.19.33:5432/project", "postgres", "093622");
 		// insert each location into table
 		Statement stmt = c.createStatement();
-		String insertHouseSQL = "INSERT INTO house(title, description, location, price, address, registered_square, status, pattern, type, url, address_point, picture) VALUES('"
+		String insertHouseSQL = "INSERT INTO house(title, description, location, price, address, type, url, address_point, picture, community, life, information) VALUES('"
 				+ house.getTitle() + "', '" + house.getDescription() + "', ST_GeomFromText('POINT("
 				+ house.getLocation() + ")', 4326), '" + house.getPrice() + "', '" + house.getAddress() + "', '"
-				+ house.getRegisteredSquare() + "', '" + house.getStatus() + "', '" + house.getPattern() + "', '"
 				+ house.getType() + "', '" + house.getUrl() + "', ST_GeomFromText('POINT(" + addressPoint.getLng() + " "
-				+ addressPoint.getLat() + ")', 4326), '" + house.getPicture() + "');";
+				+ addressPoint.getLat() + ")', 4326), '" + house.getPicture() + "', '" + house.getCommunity() + "', '"
+				+ house.getLife() + "', '" + house.getInformation() + "');";
 		System.out.println(insertHouseSQL);
 		stmt.executeUpdate(insertHouseSQL);
 
@@ -185,11 +187,6 @@ public class HouseParser {
 		String itemAddress = itemDriver.findElement(By.id("content-main")).findElement(By.tagName("h1")).getText();
 		house.setAddress(itemAddress);
 
-		// get registered square
-		String itemRegisteredSquare = itemDriver.findElement(By.id("obj-info")).findElements(By.tagName("li")).get(1)
-				.getText();
-		house.setRegisteredSquare(itemRegisteredSquare);
-
 		// get type
 		String itemType = itemDriver.findElement(By.id("obj-info")).findElements(By.tagName("li")).get(3).getText();
 		house.setType(itemType);
@@ -198,7 +195,68 @@ public class HouseParser {
 		String itemUrl = itemDriver.getCurrentUrl();
 		house.setUrl(itemUrl);
 
+		// get house info
+		StringBuilder houseInfoBuilder = new StringBuilder();
+		List<WebElement> infoTable = itemDriver.findElement(By.id("basic-data")).findElement(By.tagName("table"))
+				.findElements(By.tagName("tr"));
+		for (int i = 1; i < infoTable.size(); i++) {
+			List<WebElement> infoList = infoTable.get(i).findElements(By.tagName("td"));
+			int count = 0;
+			for (WebElement info : infoList) {
+				houseInfoBuilder.append(info.getText());
+				count++;
+				if (count % 2 == 0) {
+					houseInfoBuilder.append(", ");
+				} else {
+					houseInfoBuilder.append(": ");
+				}
+			}
+		}
+		houseInfoBuilder.delete(houseInfoBuilder.length() - 2, houseInfoBuilder.length());
+		String houseInfo = houseInfoBuilder.toString().replaceAll("\n", ", ").replace("貸款試算", "");
+		System.out.println(houseInfo);
+		house.setInformation(houseInfo);
+
+		// get community
+		boolean exists = itemDriver.findElements(By.id("belong_com_info")).size() != 0;
+		if (exists) {
+			Community community = new Community();
+			String comTitle = itemDriver.findElement(By.id("belong_com_info")).findElement(By.tagName("h3")).getText();
+			community.setName(comTitle);
+			List<WebElement> comDescriptions = itemDriver.findElement(By.id("belong_com_info"))
+					.findElements(By.tagName("p"));
+			String comDescription = comDescriptions.get(1).getText();
+			community.setDescription(comDescription);
+			house.setCommunity(gson.toJson(community));
+		}
+
+		// get life info
+		StringBuilder life = new StringBuilder();
+		List<WebElement> lifeTitles = itemDriver.findElement(By.id("life-info"))
+				.findElements(By.className("table_title"));
+		List<WebElement> lifeContent = itemDriver.findElement(By.id("life-info"))
+				.findElements(By.className("table_STD"));
+		if (lifeTitles.size() == 1) {
+			life.append(lifeTitles.get(0).getText()).append(": ").append(lifeContent.get(0).getText());
+		} else {
+			if (lifeTitles.size() == lifeContent.size()) {
+				for (int i = 0; i < lifeTitles.size(); i++) {
+					life.append(lifeTitles.get(i).getText()).append(": ").append(lifeContent.get(i).getText())
+							.append(", ");
+				}
+				life.delete(life.length() - 2, life.length() - 1);
+			} else {
+				for (int i = 0; i < lifeTitles.size() - 1; i++) {
+					life.append(lifeTitles.get(i).getText()).append(": ").append(lifeContent.get(i).getText())
+							.append(", ");
+				}
+				life.delete(life.length() - 2, life.length());
+			}
+		}
+		house.setLife(life.toString());
+
 		// get picture
+		Picture picture = new Picture();
 		List<String> itemPictureList = new ArrayList<String>();
 		List<WebElement> itemPictureelements = itemDriver.findElement(By.id("photo_list_layout"))
 				.findElements(By.tagName("img"));
@@ -206,38 +264,21 @@ public class HouseParser {
 			String itemPicture = itemPictureelements.get(webEleIndex).getAttribute("src");
 			if (itemPicture.isEmpty()) {
 			} else {
+				itemPicture = itemPicture.replace("thumb", "album");
 				itemPictureList.add(itemPicture);
 			}
 		}
-		house.setPicture(gson.toJson(itemPictureList));
-		System.out.println(gson.toJson(itemPictureList));
+		picture.setPictureURL(itemPictureList);
+		house.setPicture(itemPictureList.toString());
 
-		// get pattern
 		String itemPattern = itemDriver.findElement(By.id("obj-info")).findElements(By.tagName("li")).get(4).getText();
 		if (itemPattern.contains("社區")) {
-			itemPattern = itemDriver.findElement(By.id("obj-info")).findElements(By.tagName("li")).get(5).getText();
-			house.setPattern(itemPattern);
-
-			// get status
-			String itemStatus = itemDriver.findElement(By.id("obj-info")).findElements(By.tagName("li")).get(6)
-					.getText();
-			itemStatus = itemStatus.replaceAll("\n", ", ");
-			house.setStatus(itemStatus);
-
 			// get description
 			String itemDescription = itemDriver.findElement(By.id("obj-info")).findElements(By.tagName("li")).get(7)
 					.getText();
 			itemDescription = itemDescription.replaceAll("\n", ",");
 			house.setDescription(itemDescription);
 		} else {
-			house.setPattern(itemPattern);
-
-			// get status
-			String itemStatus = itemDriver.findElement(By.id("obj-info")).findElements(By.tagName("li")).get(5)
-					.getText();
-			itemStatus = itemStatus.replaceAll("\n", ", ");
-			house.setStatus(itemStatus);
-
 			// get description
 			String itemDescription = itemDriver.findElement(By.id("obj-info")).findElements(By.tagName("li")).get(6)
 					.getText();
