@@ -1,6 +1,6 @@
 package com.server.project;
 
-import com.server.project.parseserver.HouseParser;
+import com.server.project.parsehouse.HouseParser;
 
 public class Application {
 	public static void main(String[] args) throws Exception {

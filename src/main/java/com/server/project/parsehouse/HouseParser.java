@@ -1,4 +1,4 @@
-package com.server.project.parseserver;
+package com.server.project.parsehouse;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -138,12 +138,12 @@ public class HouseParser {
 		c = DriverManager.getConnection("jdbc:postgresql://140.119.19.33:5432/project", "postgres", "093622");
 		// insert each location into table
 		Statement stmt = c.createStatement();
-		String insertHouseSQL = "INSERT INTO house(title, description, location, price, address, type, url, address_point, picture, community, life, information) VALUES('"
+		String insertHouseSQL = "INSERT INTO house(title, description, location, price, address, type, url, address_point, picture, community, life, information, square) VALUES('"
 				+ house.getTitle() + "', '" + house.getDescription() + "', ST_GeomFromText('POINT("
 				+ house.getLocation() + ")', 4326), '" + house.getPrice() + "', '" + house.getAddress() + "', '"
 				+ house.getType() + "', '" + house.getUrl() + "', ST_GeomFromText('POINT(" + addressPoint.getLng() + " "
 				+ addressPoint.getLat() + ")', 4326), '" + house.getPicture() + "', '" + house.getCommunity() + "', '"
-				+ house.getLife() + "', '" + house.getInformation() + "');";
+				+ house.getLife() + "', '" + house.getInformation() + "', '" + house.getSquare() + "');";
 		System.out.println(insertHouseSQL);
 		stmt.executeUpdate(insertHouseSQL);
 
@@ -214,7 +214,6 @@ public class HouseParser {
 		}
 		houseInfoBuilder.delete(houseInfoBuilder.length() - 2, houseInfoBuilder.length());
 		String houseInfo = houseInfoBuilder.toString().replaceAll("\n", ", ").replace("貸款試算", "");
-		System.out.println(houseInfo);
 		house.setInformation(houseInfo);
 
 		// get community
@@ -239,19 +238,10 @@ public class HouseParser {
 		if (lifeTitles.size() == 1) {
 			life.append(lifeTitles.get(0).getText()).append(": ").append(lifeContent.get(0).getText());
 		} else {
-			if (lifeTitles.size() == lifeContent.size()) {
-				for (int i = 0; i < lifeTitles.size(); i++) {
-					life.append(lifeTitles.get(i).getText()).append(": ").append(lifeContent.get(i).getText())
-							.append(", ");
-				}
-				life.delete(life.length() - 2, life.length() - 1);
-			} else {
-				for (int i = 0; i < lifeTitles.size() - 1; i++) {
-					life.append(lifeTitles.get(i).getText()).append(": ").append(lifeContent.get(i).getText())
-							.append(", ");
-				}
-				life.delete(life.length() - 2, life.length());
+			for (int i = 0; i < lifeContent.size(); i++) {
+				life.append(lifeTitles.get(i).getText()).append(": ").append(lifeContent.get(i).getText()).append(", ");
 			}
+			life.delete(life.length() - 2, life.length());
 		}
 		house.setLife(life.toString());
 
@@ -270,6 +260,10 @@ public class HouseParser {
 		}
 		picture.setPictureURL(itemPictureList);
 		house.setPicture(itemPictureList.toString());
+
+		// get square
+		String itemSquare = itemDriver.findElement(By.id("obj-info")).findElements(By.tagName("li")).get(1).getText();
+		house.setSquare(itemSquare);
 
 		String itemPattern = itemDriver.findElement(By.id("obj-info")).findElements(By.tagName("li")).get(4).getText();
 		if (itemPattern.contains("社區")) {
