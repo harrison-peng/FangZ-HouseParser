@@ -200,17 +200,29 @@ public class HouseParser {
 		List<WebElement> infoTable = itemDriver.findElement(By.id("basic-data")).findElement(By.tagName("table"))
 				.findElements(By.tagName("tr"));
 		for (int i = 1; i < infoTable.size(); i++) {
-			List<WebElement> infoList = infoTable.get(i).findElements(By.tagName("td"));
-			int count = 0;
-			for (WebElement info : infoList) {
-				houseInfoBuilder.append(info.getText());
-				count++;
-				if (count % 2 == 0) {
-					houseInfoBuilder.append(", ");
-				} else {
-					houseInfoBuilder.append(": ");
+			if (i == 5) {
+				List<WebElement> infoList = infoTable.get(i).findElements(By.tagName("td"));
+				StringBuilder partString = new StringBuilder();
+				for (WebElement info : infoList) {
+					partString.append(info.getText()).append("@");
+				}
+				String partContent = partString.toString().replaceAll(" ", ": ").replaceAll("\n", "@ ");
+				partContent = partContent + " ";
+				houseInfoBuilder.append(partContent);
+			} else {
+				List<WebElement> infoList = infoTable.get(i).findElements(By.tagName("td"));
+				int count = 0;
+				for (WebElement info : infoList) {
+					houseInfoBuilder.append(info.getText());
+					count++;
+					if (count % 2 == 0) {
+						houseInfoBuilder.append("@ ");
+					} else {
+						houseInfoBuilder.append(": ");
+					}
 				}
 			}
+
 		}
 		houseInfoBuilder.delete(houseInfoBuilder.length() - 2, houseInfoBuilder.length());
 		String houseInfo = houseInfoBuilder.toString().replaceAll("\n", ", ").replace("貸款試算", "");
@@ -231,19 +243,45 @@ public class HouseParser {
 
 		// get life info
 		StringBuilder life = new StringBuilder();
-		List<WebElement> lifeTitles = itemDriver.findElement(By.id("life-info"))
-				.findElements(By.className("table_title"));
-		List<WebElement> lifeContent = itemDriver.findElement(By.id("life-info"))
-				.findElements(By.className("table_STD"));
-		if (lifeTitles.size() == 1) {
-			life.append(lifeTitles.get(0).getText()).append(": ").append(lifeContent.get(0).getText());
-		} else {
-			for (int i = 0; i < lifeContent.size(); i++) {
-				life.append(lifeTitles.get(i).getText()).append(": ").append(lifeContent.get(i).getText()).append(", ");
+		List<WebElement> lifeTable = itemDriver.findElement(By.id("life-info")).findElement(By.tagName("table"))
+				.findElements(By.tagName("tr"));
+		String checkMRT = lifeTable.get(lifeTable.size() - 1).getText();
+		if (checkMRT.contains("捷運")) {
+			if (lifeTable.size() != 1) {
+				for (int i = 0; i < lifeTable.size() - 1; i++) {
+					List<WebElement> lifeDetails = lifeTable.get(i).findElements(By.tagName("td"));
+					int count = 0;
+					for (WebElement lifeDetail : lifeDetails) {
+						life.append(lifeDetail.getText());
+						count++;
+						if (count % 2 == 0) {
+							life.append(", ");
+						} else {
+							life.append(": ");
+						}
+					}
+				}
 			}
+		} else {
+			for (int i = 0; i < lifeTable.size(); i++) {
+				List<WebElement> lifeDetails = lifeTable.get(i).findElements(By.tagName("td"));
+				int count = 0;
+				for (WebElement lifeDetail : lifeDetails) {
+					life.append(lifeDetail.getText());
+					count++;
+					if (count % 2 == 0) {
+						life.append(", ");
+					} else {
+						life.append(": ");
+					}
+				}
+			}
+		}
+		if (life.length() > 2) {
 			life.delete(life.length() - 2, life.length());
 		}
 		house.setLife(life.toString());
+		System.out.println(life);
 
 		// get picture
 		Picture picture = new Picture();
