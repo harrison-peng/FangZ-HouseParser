@@ -27,7 +27,7 @@ public class HouseParser {
 
 	public void parseAddress() throws Exception {
 		System.setProperty("webdriver.chrome.driver",
-				"file:///home/soslab/Desktop/SoslabProjectHouseParser/chromedriverOnLinux");
+				"/home/soslab/Desktop/SoslabProjectHouseParser/chromedriverOnLinux");
 		//file:///home/soslab/Desktop/SoslabProjectHouseParser/chromedriverOnLinux
 		///Users/Hao/Documents/Java/SoslabProjectHouseParser/chromedriverOnMac
 		driver = new ChromeDriver();
