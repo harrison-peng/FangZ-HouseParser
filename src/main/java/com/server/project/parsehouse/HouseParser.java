@@ -27,9 +27,9 @@ public class HouseParser {
 
 	public void parseAddress() throws Exception {
 		System.setProperty("webdriver.chrome.driver",
-				"/home/soslab/Desktop/SoslabProjectHouseParser/chromedriverOnLinux");
-		//file:///home/soslab/Desktop/SoslabProjectHouseParser/chromedriverOnLinux
-		///Users/Hao/Documents/Java/SoslabProjectHouseParser/chromedriverOnMac
+				"/Users/Hao/Documents/Java/SoslabProjectHouseParser/chromedriverOnMac");
+		// file:///home/soslab/Desktop/SoslabProjectHouseParser/chromedriverOnLinux
+		/// Users/Hao/Documents/Java/SoslabProjectHouseParser/chromedriverOnMac
 		driver = new ChromeDriver();
 		// parse 信義房屋
 		// navigate to house list
@@ -290,12 +290,23 @@ public class HouseParser {
 		List<String> itemPictureList = new ArrayList<String>();
 		List<WebElement> itemPictureelements = itemDriver.findElement(By.id("photo_list_layout"))
 				.findElements(By.tagName("img"));
-		for (int webEleIndex = 0; webEleIndex < 5; webEleIndex++) {
-			String itemPicture = itemPictureelements.get(webEleIndex).getAttribute("src");
-			if (itemPicture.isEmpty()) {
-			} else {
-				itemPicture = itemPicture.replace("thumb", "album");
-				itemPictureList.add(itemPicture);
+		if (itemPictureelements.size() > 5) {
+			for (int webEleIndex = 0; webEleIndex < 5; webEleIndex++) {
+				String itemPicture = itemPictureelements.get(webEleIndex).getAttribute("src");
+				if (itemPicture.isEmpty()) {
+				} else {
+					itemPicture = itemPicture.replace("thumb", "album");
+					itemPictureList.add(itemPicture);
+				}
+			}
+		} else {
+			for (int webEleIndex = 0; webEleIndex < itemPictureelements.size(); webEleIndex++) {
+				String itemPicture = itemPictureelements.get(webEleIndex).getAttribute("src");
+				if (itemPicture.isEmpty()) {
+				} else {
+					itemPicture = itemPicture.replace("thumb", "album");
+					itemPictureList.add(itemPicture);
+				}
 			}
 		}
 		picture.setPictureURL(itemPictureList);
