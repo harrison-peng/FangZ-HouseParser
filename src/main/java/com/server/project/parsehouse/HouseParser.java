@@ -27,7 +27,9 @@ public class HouseParser {
 
 	public void parseAddress() throws Exception {
 		System.setProperty("webdriver.chrome.driver",
-				"/Users/Hao/Documents/Java/SoslabProjectHouseParser/chromedriver");
+				"file:///home/soslab/Desktop/SoslabProjectHouseParser/chromedriver");
+		//file:///home/soslab/Desktop/SoslabProjectHouseParser/chromedriver
+		///Users/Hao/Documents/Java/SoslabProjectHouseParser/chromedriver
 		driver = new ChromeDriver();
 		// parse 信義房屋
 		// navigate to house list
