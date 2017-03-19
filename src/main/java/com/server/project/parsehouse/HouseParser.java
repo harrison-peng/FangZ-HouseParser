@@ -27,74 +27,37 @@ public class HouseParser {
 	WebDriver driver;
 
 	public void parseAddress() throws Exception {
-		// driver = new SafariDriver();
 		System.setProperty("webdriver.chrome.driver", "/home/soslab/Desktop/SoslabProjectHouseParser/chromedriver");
 		driver = new ChromeDriver();
-		// parse 信義房屋
-		// navigate to house list
-		int endNum = 0;
-		Class.forName("org.postgresql.Driver").newInstance();
-		String url = "jdbc:postgresql://140.119.19.33:5432/project";
-		Connection con = DriverManager.getConnection(url, "postgres", "093622"); // 帳號密碼
-		Statement selectST = con.createStatement();
+		// driver = new SafariDriver();
+		try {
+			// parse 信義房屋
+			// navigate to house list
+			int endNum = 0;
+			Class.forName("org.postgresql.Driver").newInstance();
+			String url = "jdbc:postgresql://140.119.19.33:5432/project";
+			Connection con = DriverManager.getConnection(url, "postgres", "093622"); // 帳號密碼
+			Statement selectST = con.createStatement();
 
-		String getHouseNumSQL = "select count('id') from house;";
-		ResultSet selectRS = selectST.executeQuery(getHouseNumSQL);
-		while (selectRS.next()) {
-			endNum = Integer.valueOf(selectRS.getString(1));
-		}
-
-		int startPage = (endNum / 30) + 1;
-		int startNum = (endNum % 30) + 1;
-		driver.get("http://buy.sinyi.com.tw/list/" + (startPage - 1) + ".html");
-
-		System.out.println("start from page" + startPage);
-		List<WebElement> button = driver.findElement(By.id("search_pagination")).findElements(By.tagName("li"));
-		boolean breakIt = true;
-		while (true) {
-			breakIt = true;
-			try {
-				for (WebElement li : button) {
-					String text = li.getText();
-					if (text.equals(String.valueOf(startPage))) {
-						System.out.println("click");
-						li.click();
-						Thread.sleep(4000);
-						break;
-					}
-				}
-			} catch (Exception e) {
-				if (e.getMessage().contains("element is not attached")) {
-					breakIt = false;
-					System.out.println("try again");
-				}
-			}
-			if (breakIt) {
-				break;
+			String getHouseNumSQL = "select count('id') from house;";
+			ResultSet selectRS = selectST.executeQuery(getHouseNumSQL);
+			while (selectRS.next()) {
+				endNum = Integer.valueOf(selectRS.getString(1));
 			}
 
-		}
-		// navigate to each page
-		for (int i = startNum - 1; i < 30; i++) {
-			System.out.println("start parse No." + (i + 1));
-			House house = seleniumParse(i);
-			System.out.println("start insert to database");
-			Gson gson = new Gson();
-			System.out.println(gson.toJson(house));
-			locationInsertIntoDB(house);
-		}
+			int startPage = (endNum / 30) + 1;
+			int startNum = (endNum % 30) + 1;
+			driver.get("http://buy.sinyi.com.tw/list/" + (startPage - 1) + ".html");
 
-		for (int j = startPage + 1; j < 100; j++) {
-			driver.manage().timeouts().pageLoadTimeout(10, TimeUnit.SECONDS);
-			System.out.println("start from page" + j);
-			button = driver.findElement(By.id("search_pagination")).findElements(By.tagName("li"));
-			breakIt = true;
+			System.out.println("start from page" + startPage);
+			List<WebElement> button = driver.findElement(By.id("search_pagination")).findElements(By.tagName("li"));
+			boolean breakIt = true;
 			while (true) {
 				breakIt = true;
 				try {
 					for (WebElement li : button) {
 						String text = li.getText();
-						if (text.equals(String.valueOf(j))) {
+						if (text.equals(String.valueOf(startPage))) {
 							System.out.println("click");
 							li.click();
 							Thread.sleep(4000);
@@ -113,7 +76,7 @@ public class HouseParser {
 
 			}
 			// navigate to each page
-			for (int i = 0; i < 30; i++) {
+			for (int i = startNum - 1; i < 30; i++) {
 				System.out.println("start parse No." + (i + 1));
 				House house = seleniumParse(i);
 				System.out.println("start insert to database");
@@ -121,12 +84,56 @@ public class HouseParser {
 				System.out.println(gson.toJson(house));
 				locationInsertIntoDB(house);
 			}
+
+			for (int j = startPage + 1; j < 100; j++) {
+				driver.manage().timeouts().pageLoadTimeout(10, TimeUnit.SECONDS);
+				System.out.println("start from page" + j);
+				button = driver.findElement(By.id("search_pagination")).findElements(By.tagName("li"));
+				breakIt = true;
+				while (true) {
+					breakIt = true;
+					try {
+						for (WebElement li : button) {
+							String text = li.getText();
+							if (text.equals(String.valueOf(j))) {
+								System.out.println("click");
+								li.click();
+								Thread.sleep(4000);
+								break;
+							}
+						}
+					} catch (Exception e) {
+						if (e.getMessage().contains("element is not attached")) {
+							breakIt = false;
+							System.out.println("try again");
+						}
+					}
+					if (breakIt) {
+						break;
+					}
+
+				}
+				// navigate to each page
+				for (int i = 0; i < 30; i++) {
+					System.out.println("start parse No." + (i + 1));
+					House house = seleniumParse(i);
+					System.out.println("start insert to database");
+					Gson gson = new Gson();
+					System.out.println(gson.toJson(house));
+					locationInsertIntoDB(house);
+				}
+			}
+			con.close();
+			selectRS.close();
+			selectST.close();
+			driver.close();
+			// driver.quit();
+			System.out.println("complete parse the web and start to inert into DB.");
+		} catch (IndexOutOfBoundsException e) {
+			driver.close();
+			// driver.quit();
+			parseAddress();
 		}
-		con.close();
-		selectRS.close();
-		selectST.close();
-		driver.quit();
-		System.out.println("complete parse the web and start to inert into DB.");
 	}
 
 	// 把爬到的經緯度資料存入資料庫
@@ -332,8 +339,8 @@ public class HouseParser {
 			itemDescription = itemDescription.replaceAll("\n", ", ");
 			house.setDescription(itemDescription);
 		}
-		// itemDriver.quit();
-		itemDriver.close();
+		itemDriver.quit();
+		// itemDriver.close();
 		return house;
 	}
 }
