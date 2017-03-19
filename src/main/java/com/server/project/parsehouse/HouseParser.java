@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.safari.SafariDriver;
 
 import com.google.gson.Gson;
@@ -27,8 +27,9 @@ public class HouseParser {
 	WebDriver driver;
 
 	public void parseAddress() throws Exception {
-//		driver = new SafariDriver();
-		driver = new FirefoxDriver();
+		// driver = new SafariDriver();
+		System.setProperty("webdriver.chrome.driver", "/home/soslab/Desktop/SoslabProjectHouseParser/chromedriver");
+		driver = new ChromeDriver();
 		// parse 信義房屋
 		// navigate to house list
 		int endNum = 0;
@@ -158,8 +159,8 @@ public class HouseParser {
 		House house = new House();
 		WebElement item = resultItems.get(index);
 		String itemURL = item.findElement(By.tagName("a")).getAttribute("href");
-//		WebDriver itemDriver = new SafariDriver();
-		WebDriver itemDriver = new FirefoxDriver();
+		// WebDriver itemDriver = new SafariDriver();
+		WebDriver itemDriver = new ChromeDriver();
 		itemDriver.get(itemURL);
 
 		// get location URL
@@ -331,7 +332,7 @@ public class HouseParser {
 			itemDescription = itemDescription.replaceAll("\n", ", ");
 			house.setDescription(itemDescription);
 		}
-//		itemDriver.quit();
+		// itemDriver.quit();
 		itemDriver.close();
 		return house;
 	}
