@@ -13,7 +13,8 @@ import java.util.concurrent.TimeUnit;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.safari.SafariDriver;
 
 import com.google.gson.Gson;
 import com.server.project.api.Community;
@@ -26,11 +27,8 @@ public class HouseParser {
 	WebDriver driver;
 
 	public void parseAddress() throws Exception {
-		System.setProperty("webdriver.chrome.driver",
-				"/Users/Hao/Documents/Java/SoslabProjectHouseParser/chromedriverOnMac");
-		// file:///home/soslab/Desktop/SoslabProjectHouseParser/chromedriverOnLinux
-		/// Users/Hao/Documents/Java/SoslabProjectHouseParser/chromedriverOnMac
-		driver = new ChromeDriver();
+//		driver = new SafariDriver();
+		driver = new FirefoxDriver();
 		// parse 信義房屋
 		// navigate to house list
 		int endNum = 0;
@@ -160,7 +158,8 @@ public class HouseParser {
 		House house = new House();
 		WebElement item = resultItems.get(index);
 		String itemURL = item.findElement(By.tagName("a")).getAttribute("href");
-		WebDriver itemDriver = new ChromeDriver();
+//		WebDriver itemDriver = new SafariDriver();
+		WebDriver itemDriver = new FirefoxDriver();
 		itemDriver.get(itemURL);
 
 		// get location URL
@@ -247,10 +246,26 @@ public class HouseParser {
 		StringBuilder life = new StringBuilder();
 		List<WebElement> lifeTable = itemDriver.findElement(By.id("life-info")).findElement(By.tagName("table"))
 				.findElements(By.tagName("tr"));
-		String checkMRT = lifeTable.get(lifeTable.size() - 1).getText();
-		if (checkMRT.contains("捷運")) {
-			if (lifeTable.size() != 1) {
-				for (int i = 0; i < lifeTable.size() - 1; i++) {
+		if (lifeTable.size() != 0) {
+			String checkMRT = lifeTable.get(lifeTable.size() - 1).getText();
+			if (checkMRT.contains("捷運")) {
+				if (lifeTable.size() != 1) {
+					for (int i = 0; i < lifeTable.size() - 1; i++) {
+						List<WebElement> lifeDetails = lifeTable.get(i).findElements(By.tagName("td"));
+						int count = 0;
+						for (WebElement lifeDetail : lifeDetails) {
+							life.append(lifeDetail.getText());
+							count++;
+							if (count % 2 == 0) {
+								life.append(", ");
+							} else {
+								life.append(": ");
+							}
+						}
+					}
+				}
+			} else {
+				for (int i = 0; i < lifeTable.size(); i++) {
 					List<WebElement> lifeDetails = lifeTable.get(i).findElements(By.tagName("td"));
 					int count = 0;
 					for (WebElement lifeDetail : lifeDetails) {
@@ -264,26 +279,12 @@ public class HouseParser {
 					}
 				}
 			}
-		} else {
-			for (int i = 0; i < lifeTable.size(); i++) {
-				List<WebElement> lifeDetails = lifeTable.get(i).findElements(By.tagName("td"));
-				int count = 0;
-				for (WebElement lifeDetail : lifeDetails) {
-					life.append(lifeDetail.getText());
-					count++;
-					if (count % 2 == 0) {
-						life.append(", ");
-					} else {
-						life.append(": ");
-					}
-				}
+			if (life.length() > 2) {
+				life.delete(life.length() - 2, life.length());
 			}
+			house.setLife(life.toString());
+			System.out.println(life);
 		}
-		if (life.length() > 2) {
-			life.delete(life.length() - 2, life.length());
-		}
-		house.setLife(life.toString());
-		System.out.println(life);
 
 		// get picture
 		Picture picture = new Picture();
@@ -330,6 +331,7 @@ public class HouseParser {
 			itemDescription = itemDescription.replaceAll("\n", ", ");
 			house.setDescription(itemDescription);
 		}
+//		itemDriver.quit();
 		itemDriver.close();
 		return house;
 	}
